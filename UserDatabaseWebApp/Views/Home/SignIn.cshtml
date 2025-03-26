@@ -20,28 +20,28 @@
                                     </div>
                                 </div>
                                 <form>
-                                    <div class="col-12">
+                                    <div class="col-12 mt-3">
                                         <div class="mb-3">
                                             <label for="InputEmail" class="form-label">Email address</label>
-                                            <input type="email" class="form-control" id="InputEmail" aria-describedby="emailHelp">
+                                            <input type="email" class="form-control w-100" id="InputEmail" aria-describedby="emailHelp">
                                             <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
                                         </div>
                                     </div>
-                                    <div class="col-12">
+                                    <div class="col-12 mt-3">
                                         <div class="mb-3">
                                             <label for="InputPassword" class="form-label">Password</label>
-                                            <input type="password" class="form-control" autocomplete="new-password" id="InputPassword">
+                                            <input type="password" class="form-control" id="InputPassword">
                                         </div>
                                     </div>
-                                    <div class="col-12">
+                                    <div class="col-12 mt-3">
                                         <div class="mb-3 form-check">
                                             <input type="checkbox" class="form-check-input" id="Check">
                                             <label class="form-check-label" for="exampleCheck1">Remember me</label>
                                         </div>
                                     </div>
-                                    <div class="col-12">
+                                    <div class="col-12 mt-3">
                                         <div class="d-grid">
-                                            <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                                            <button asp-controller="Home" formaction="Index" asp-action="Test" type="submit" class="btn btn-primary">Sign In</button>
                                         </div>
                                     </div>
                                     <div class="col-12 mt-3">
