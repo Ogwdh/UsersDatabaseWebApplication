@@ -124,5 +124,25 @@ namespace UserDatabaseWebApp.Controllers
             }
             base.Dispose(disposing);
         }
+
+        // POST: Users/Login
+        [HttpPost]
+        public ActionResult Login(string Email, string Password)
+        {
+            var user = db.Users.FirstOrDefault(u => u.Email == Email && u.Password == Password);
+
+            if (user != null)
+            {
+                user.LastSeen = DateTime.Now;
+                db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                ModelState.AddModelError("", "Invalid email or password");
+                return RedirectToAction("SignIn", "Home");
+            }
+        }
+
     }
 }

@@ -19,18 +19,19 @@
                                         </div>
                                     </div>
                                 </div>
-                                <form>
+                                <form asp-controller="Users" asp-action="Login" method="post">
+
                                     <div class="col-12 mt-3">
                                         <div class="mb-3">
                                             <label for="InputEmail" class="form-label">Email address</label>
-                                            <input type="email" class="form-control w-100" id="InputEmail" aria-describedby="emailHelp">
+                                            <input type="email" class="form-control w-100" id="InputEmail" name="Email" aria-describedby="emailHelp">
                                             <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
                                         </div>
                                     </div>
                                     <div class="col-12 mt-3">
                                         <div class="mb-3">
                                             <label for="InputPassword" class="form-label">Password</label>
-                                            <input type="password" class="form-control" id="InputPassword">
+                                            <input type="password" class="form-control" id="InputPassword" name="Password" autocomplete="new-password">
                                         </div>
                                     </div>
                                     <div class="col-12 mt-3">
@@ -41,11 +42,8 @@
                                     </div>
                                     <div class="col-12 mt-3">
                                         <div class="d-grid">
-                                            <button asp-controller="Home" formaction="Index" asp-action="Test" type="submit" class="btn btn-primary">Sign In</button>
+                                            <button type="submit" class="btn btn-primary">Sign In</button>
                                         </div>
-                                    </div>
-                                    <div class="col-12 mt-3">
-                                        <p class="text-center mb-0">Don't have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Sign up</a></p>
                                     </div>
                                 </form>
                             </div>
@@ -59,3 +57,4 @@
         <img src="https://cdn.pixabay.com/photo/2020/01/26/20/14/computer-4795762_1280.jpg" class="img-fluid" alt="Responsive image">
     </div>
 </div>
+
