@@ -94,28 +94,23 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // Select all checkbox functionality
             $("#selectAll").change(function() {
                 $(".user-checkbox").prop('checked', $(this).prop('checked'));
                 updateBulkActionsVisibility();
             });
 
-            // Individual checkbox change
             $(".user-checkbox").change(function() {
                 updateBulkActionsVisibility();
 
-                // If any checkbox is unchecked, uncheck "Select All" too
                 if (!$(this).prop('checked')) {
                     $("#selectAll").prop('checked', false);
                 }
 
-                // If all checkboxes are checked, check "Select All" too
                 if ($(".user-checkbox:checked").length === $(".user-checkbox").length) {
                     $("#selectAll").prop('checked', true);
                 }
             });
 
-            // Show/hide bulk actions based on selection
             function updateBulkActionsVisibility() {
                 if ($(".user-checkbox:checked").length > 0) {
                     $(".bulk-actions").show();
@@ -124,28 +119,22 @@
                 }
             }
 
-            // Bulk delete button
             $("#bulkDelete").click(function() {
                 if (confirm("Are you sure you want to delete the selected users?")) {
-                    // Submit the form to a delete action
                     $("#usersForm").attr("action", "@Url.Action("BulkDelete", "Users")");
                     $("#usersForm").submit();
                 }
             });
 
-            // Bulk block button
             $("#bulkBlock").click(function() {
                 if (confirm("Are you sure you want to block the selected users?")) {
-                    // Submit the form to a block action
                     $("#usersForm").attr("action", "@Url.Action("BulkBlock", "Users")");
                     $("#usersForm").submit();
                 }
             });
 
-            // Bulk unblock button
             $("#bulkUnblock").click(function() {
                 if (confirm("Are you sure you want to unblock the selected users?")) {
-                    // Submit the form to an unblock action
                     $("#usersForm").attr("action", "@Url.Action("BulkUnblock", "Users")");
                     $("#usersForm").submit();
                 }
