@@ -1,51 +1,156 @@
 ﻿@model IEnumerable<UserDatabaseWebApp.Models.User>
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Users";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<p>
-    @Html.ActionLink("Create New", "Create")
-</p>
-<table class="table">
-    <tr>
-        <th>
-            @Html.DisplayNameFor(model => model.Name)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Email)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.LastSeen)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Blocked)
-        </th>
-        <th></th>
-    </tr>
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Users Management</h2>
+            <p class="text-muted">View and manage all registered users</p>
+        </div>
+    </div>
 
-    @foreach (var item in Model)
-    {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastSeen)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Blocked)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
-                @Html.ActionLink("Details", "Details", new { id = item.Id }) |
-                @Html.ActionLink("Delete", "Delete", new { id = item.Id })
-            </td>
-        </tr>
-    }
+    <form id="usersForm" method="post" class="col-12 w-100">
+        @Html.AntiForgeryToken()
+        <div class="card shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAll">
+                    <label class="form-check-label" for="selectAll">Select All</label>
+                </div>
+                <div class="bulk-actions" style="display: none;">
+                    <button type="button" class="btn btn-sm btn-danger" id="bulkDelete">
+                        <i class="bi bi-trash"></i> Delete Selected
+                    </button>
+                    <button type="button" class="btn btn-sm btn-warning" id="bulkBlock">
+                        <i class="bi bi-slash-circle"></i> Block Selected
+                    </button>
+                    <button type="button" class="btn btn-sm btn-success" id="bulkUnblock">
+                        <i class="bi bi-check-circle"></i> Unblock Selected
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="40">
+                                    <!-- Checkbox column -->
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.Name)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.Email)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.LastSeen)
+                                </th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input user-checkbox" type="checkbox" name="selectedUsers" value="@item.Id" id="user-@item.Id">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Name)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Email)
+                                    </td>
+                                    <td>
+                                        @item.LastSeen.ToString("dd/MM/yyyy HH:mm:ss")
+                                    </td>
+                                    <td>
+                                        @if (item.Blocked)
+                                        {
+                                            <span class="badge bg-danger">Blocked</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 
-</table>
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Select all checkbox functionality
+            $("#selectAll").change(function() {
+                $(".user-checkbox").prop('checked', $(this).prop('checked'));
+                updateBulkActionsVisibility();
+            });
+
+            // Individual checkbox change
+            $(".user-checkbox").change(function() {
+                updateBulkActionsVisibility();
+
+                // If any checkbox is unchecked, uncheck "Select All" too
+                if (!$(this).prop('checked')) {
+                    $("#selectAll").prop('checked', false);
+                }
+
+                // If all checkboxes are checked, check "Select All" too
+                if ($(".user-checkbox:checked").length === $(".user-checkbox").length) {
+                    $("#selectAll").prop('checked', true);
+                }
+            });
+
+            // Show/hide bulk actions based on selection
+            function updateBulkActionsVisibility() {
+                if ($(".user-checkbox:checked").length > 0) {
+                    $(".bulk-actions").show();
+                } else {
+                    $(".bulk-actions").hide();
+                }
+            }
+
+            // Bulk delete button
+            $("#bulkDelete").click(function() {
+                if (confirm("Are you sure you want to delete the selected users?")) {
+                    // Submit the form to a delete action
+                    $("#usersForm").attr("action", "@Url.Action("BulkDelete", "Users")");
+                    $("#usersForm").submit();
+                }
+            });
+
+            // Bulk block button
+            $("#bulkBlock").click(function() {
+                if (confirm("Are you sure you want to block the selected users?")) {
+                    // Submit the form to a block action
+                    $("#usersForm").attr("action", "@Url.Action("BulkBlock", "Users")");
+                    $("#usersForm").submit();
+                }
+            });
+
+            // Bulk unblock button
+            $("#bulkUnblock").click(function() {
+                if (confirm("Are you sure you want to unblock the selected users?")) {
+                    // Submit the form to an unblock action
+                    $("#usersForm").attr("action", "@Url.Action("BulkUnblock", "Users")");
+                    $("#usersForm").submit();
+                }
+            });
+
+        });
+    </script>
+}

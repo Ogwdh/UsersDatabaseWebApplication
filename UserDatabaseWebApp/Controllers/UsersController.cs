@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.Security;
 using System.Web.UI.WebControls;
 using UserDatabaseWebApp.Data;
 using UserDatabaseWebApp.Models;
@@ -16,21 +17,36 @@ namespace UserDatabaseWebApp.Controllers
     {
         private UserDatabaseWebAppContext db = new UserDatabaseWebAppContext();
 
+        [Authorize]
         public ActionResult Index()
         {
-            return View(db.Users.ToList());
+            return View(db.Users.OrderByDescending(u => u.LastSeen).ToList());
         }
+
+        [AllowAnonymous]
         public ActionResult Login()
         {
+            var cookie = Request.Cookies["RememberMe"];
+            if (cookie != null)
+            {
+                ViewBag.RememberedEmail = cookie.Value;
+            }
             return View();
         }
+
+        [AllowAnonymous]
         public ActionResult SignUp()
         {
+            var cookie = Request.Cookies["RememberMe"];
+            if (cookie != null)
+            {
+                ViewBag.RememberedEmail = cookie.Value;
+            }
             return View();
         }
         private bool VerifyPassword(string password1, string password2)
         {
-            return password1 == password2;
+            return Crypto.Hash(password1) == password2;
         }
 
         public ActionResult Create()
@@ -93,6 +109,7 @@ namespace UserDatabaseWebApp.Controllers
             return View(user);
         }
 
+        [ValidateAntiForgeryToken]
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -127,7 +144,9 @@ namespace UserDatabaseWebApp.Controllers
         }
 
         [HttpPost]
-        public ActionResult Login(User model)
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public ActionResult Login(User model, bool rememberMe = false)
         {
             var user = db.Users.FirstOrDefault(u => u.Email == model.Email);
 
@@ -138,8 +157,21 @@ namespace UserDatabaseWebApp.Controllers
                 {
                     return RedirectToAction("Index", "Users");
                 }
-                    user.LastSeen = DateTime.Now;
+
+                FormsAuthentication.SetAuthCookie(user.Email, rememberMe);
+
+                if (rememberMe)
+                {
+                    HttpCookie cookie = new HttpCookie("RememberMe", user.Email);
+                    cookie.Expires = DateTime.Now.AddDays(30);
+                    Response.Cookies.Add(cookie);
+                }
+
+                user.LastSeen = DateTime.Now;
                 db.SaveChanges();
+
+                FormsAuthentication.SetAuthCookie(user.Email, false);
+
                 return RedirectToAction("Index", "Users");
             }
             ModelState.AddModelError("", "Invalid email or password");
@@ -147,6 +179,8 @@ namespace UserDatabaseWebApp.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
         public ActionResult SignUp(string Username, string Email, string Password)
         {
             var existingUser = db.Users.FirstOrDefault(u => u.Email == Email);
@@ -162,7 +196,7 @@ namespace UserDatabaseWebApp.Controllers
             {
                 Name = Username,
                 Email = Email,
-                Password = Password,
+                Password = Crypto.Hash(Password),
                 LastSeen = DateTime.Now,
                 Blocked = false
             };
@@ -170,7 +204,74 @@ namespace UserDatabaseWebApp.Controllers
             db.Users.Add(user);
             db.SaveChanges();
 
+            FormsAuthentication.SetAuthCookie(user.Email, false);
+
             return RedirectToAction("Index", "Users");
         }
+
+        [AllowAnonymous]
+        public ActionResult Logout()
+        {
+            FormsAuthentication.SignOut();
+            return RedirectToAction("Login");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult BulkDelete(int[] selectedUsers)
+        {
+            if (selectedUsers != null && selectedUsers.Length > 0)
+            {
+                foreach (var id in selectedUsers)
+                {
+                    var user = db.Users.Find(id);
+                    if (user != null)
+                    {
+                        db.Users.Remove(user);
+                    }
+                }
+                db.SaveChanges();
+            }
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult BulkBlock(int[] selectedUsers)
+        {
+            if (selectedUsers != null && selectedUsers.Length > 0)
+            {
+                foreach (var id in selectedUsers)
+                {
+                    var user = db.Users.Find(id);
+                    if (user != null)
+                    {
+                        user.Blocked = true;
+                    }
+                }
+                db.SaveChanges();
+            }
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult BulkUnblock(int[] selectedUsers)
+        {
+            if (selectedUsers != null && selectedUsers.Length > 0)
+            {
+                foreach (var id in selectedUsers)
+                {
+                    var user = db.Users.Find(id);
+                    if (user != null)
+                    {
+                        user.Blocked = false;
+                    }
+                }
+                db.SaveChanges();
+            }
+            return RedirectToAction("Index");
+        }
+
     }
 }

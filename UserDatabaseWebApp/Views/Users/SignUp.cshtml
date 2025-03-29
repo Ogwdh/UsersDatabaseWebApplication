@@ -25,6 +25,7 @@
                                     </div>
                                 </div>
                                 <form asp-controller="Users" asp-action="SignUp" method="post">
+                                    @Html.AntiForgeryToken()
                                     <div class="col-12 mt-3">
                                         <div class="d-grid">
                                             <label for="InputName" class="form-label">Username</label>
@@ -42,7 +43,6 @@
                                             }
                                         </div>
                                     </div>
-
                                     <div class="col-12 mt-3">
                                         <div class="d-grid">
                                             <label for="InputPassword" class="form-label">Password</label>
@@ -51,14 +51,18 @@
                                     </div>
                                     <div class="col-12 mt-3">
                                         <div class="mb-3 form-check">
-                                            <input type="checkbox" class="form-check-input" id="Check">
-                                            <label class="form-check-label" for="exampleCheck1">Remember me</label>
+                                            <input type="checkbox" class="form-check-input" id="Check" name="RememberMe">
+                                            <label class="form-check-label" for="Check">Remember me</label>
                                         </div>
                                     </div>
+
                                     <div class="col-12 mt-3">
                                         <div class="d-grid">
                                             <button type="submit" class="btn btn-primary">Sign Up</button>
                                         </div>
+                                    </div>
+                                    <div class="col-12 mt-3">
+                                        <p class="text-center mb-0">Already have an account? <a href="@Url.Action("Login", "Users")">Sign in</a></p>
                                     </div>
                                 </form>
                             </div>

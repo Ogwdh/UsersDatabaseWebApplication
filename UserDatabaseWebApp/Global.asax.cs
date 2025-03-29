@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
+using UserDatabaseWebApp.Filters;
 
 namespace UserDatabaseWebApp
 {
@@ -16,6 +17,7 @@ namespace UserDatabaseWebApp
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
+            GlobalFilters.Filters.Add(new UserAuthorizationFilter());
         }
     }
 }
