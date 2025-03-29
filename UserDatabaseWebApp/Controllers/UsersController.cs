@@ -20,7 +20,27 @@ namespace UserDatabaseWebApp.Controllers
         [Authorize]
         public ActionResult Index()
         {
+            var blockedCheck = CheckIfUserBlocked();
+            if (blockedCheck != null)
+            {
+                return blockedCheck;
+            }
+
             return View(db.Users.OrderByDescending(u => u.LastSeen).ToList());
+        }
+
+        private ActionResult CheckIfUserBlocked()
+        {
+            string currentUserEmail = User.Identity.Name;
+            var currentUser = db.Users.FirstOrDefault(u => u.Email == currentUserEmail);
+
+            if (currentUser != null && currentUser.Blocked)
+            {
+                FormsAuthentication.SignOut();
+                return RedirectToAction("Login", new { message = "Your account has been blocked." });
+            }
+
+            return null;
         }
 
         [AllowAnonymous]
@@ -43,57 +63,6 @@ namespace UserDatabaseWebApp.Controllers
                 ViewBag.RememberedEmail = cookie.Value;
             }
             return View();
-        }
-        private bool VerifyPassword(string password1, string password2)
-        {
-            return Crypto.Hash(password1) == password2;
-        }
-
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        public ActionResult Details(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            User user = db.Users.Find(id);
-            if (user == null)
-            {
-                return HttpNotFound();
-            }
-            return View(user);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "Id,Name,Email,Password,LastSeen,Blocked")] User user)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Users.Add(user);
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-
-            return View(user);
-        }
-
-        public ActionResult Edit(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            User user = db.Users.Find(id);
-            if (user == null)
-            {
-                return HttpNotFound();
-            }
-            return View(user);
         }
 
         [HttpPost]
@@ -146,36 +115,38 @@ namespace UserDatabaseWebApp.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public ActionResult Login(User model, bool rememberMe = false)
+        public ActionResult Login(User model)
         {
             var user = db.Users.FirstOrDefault(u => u.Email == model.Email);
 
             if (user != null)
             {
-                bool isPasswordValid = VerifyPassword(model.Password, user.Password);
-                if (isPasswordValid)
+                if (user.Blocked)
                 {
+                    ModelState.AddModelError("", "This account has been blocked. Please contact an administrator.");
+                    return View(model);
+                }
+
+                if (user.Password == Crypto.Hash(model.Password))
+                {
+                    user.LastSeen = DateTime.Now;
+                    db.SaveChanges();
+
+                    FormsAuthentication.SetAuthCookie(user.Email, false);
+
                     return RedirectToAction("Index", "Users");
                 }
-
-                FormsAuthentication.SetAuthCookie(user.Email, rememberMe);
-
-                if (rememberMe)
+                else
                 {
-                    HttpCookie cookie = new HttpCookie("RememberMe", user.Email);
-                    cookie.Expires = DateTime.Now.AddDays(30);
-                    Response.Cookies.Add(cookie);
+                    ModelState.AddModelError("", "Invalid email or password");
+                    return View(model);
                 }
-
-                user.LastSeen = DateTime.Now;
-                db.SaveChanges();
-
-                FormsAuthentication.SetAuthCookie(user.Email, false);
-
-                return RedirectToAction("Index", "Users");
             }
-            ModelState.AddModelError("", "Invalid email or password");
-            return View(model);
+            else
+            {
+                ModelState.AddModelError("", "Invalid email or password");
+                return View(model);
+            }
         }
 
         [HttpPost]
@@ -220,6 +191,9 @@ namespace UserDatabaseWebApp.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult BulkDelete(int[] selectedUsers)
         {
+            string currentUserEmail = User.Identity.Name;
+            bool currentUserDeleted = false;
+
             if (selectedUsers != null && selectedUsers.Length > 0)
             {
                 foreach (var id in selectedUsers)
@@ -227,10 +201,20 @@ namespace UserDatabaseWebApp.Controllers
                     var user = db.Users.Find(id);
                     if (user != null)
                     {
+                        if (user.Email == currentUserEmail)
+                        {
+                            currentUserDeleted = true;
+                        }
                         db.Users.Remove(user);
                     }
                 }
                 db.SaveChanges();
+
+                if (currentUserDeleted)
+                {
+                    FormsAuthentication.SignOut();
+                    return RedirectToAction("Login");
+                }
             }
             return RedirectToAction("Index");
         }
@@ -239,6 +223,9 @@ namespace UserDatabaseWebApp.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult BulkBlock(int[] selectedUsers)
         {
+            string currentUserEmail = User.Identity.Name;
+            bool currentUserBlocked = false;
+
             if (selectedUsers != null && selectedUsers.Length > 0)
             {
                 foreach (var id in selectedUsers)
@@ -247,12 +234,23 @@ namespace UserDatabaseWebApp.Controllers
                     if (user != null)
                     {
                         user.Blocked = true;
+                        if (user.Email == currentUserEmail)
+                        {
+                            currentUserBlocked = true;
+                        }
                     }
                 }
                 db.SaveChanges();
+
+                if (currentUserBlocked)
+                {
+                    FormsAuthentication.SignOut();
+                    return RedirectToAction("Login");
+                }
             }
             return RedirectToAction("Index");
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
