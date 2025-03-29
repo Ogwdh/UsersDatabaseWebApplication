@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.UI.WebControls;
 using UserDatabaseWebApp.Data;
 using UserDatabaseWebApp.Models;
 
@@ -15,13 +16,28 @@ namespace UserDatabaseWebApp.Controllers
     {
         private UserDatabaseWebAppContext db = new UserDatabaseWebAppContext();
 
-        // GET: Users
         public ActionResult Index()
         {
             return View(db.Users.ToList());
         }
+        public ActionResult Login()
+        {
+            return View();
+        }
+        public ActionResult SignUp()
+        {
+            return View();
+        }
+        private bool VerifyPassword(string password1, string password2)
+        {
+            return password1 == password2;
+        }
 
-        // GET: Users/Details/5
+        public ActionResult Create()
+        {
+            return View();
+        }
+
         public ActionResult Details(int? id)
         {
             if (id == null)
@@ -36,15 +52,6 @@ namespace UserDatabaseWebApp.Controllers
             return View(user);
         }
 
-        // GET: Users/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Users/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind(Include = "Id,Name,Email,Password,LastSeen,Blocked")] User user)
@@ -59,7 +66,6 @@ namespace UserDatabaseWebApp.Controllers
             return View(user);
         }
 
-        // GET: Users/Edit/5
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -74,9 +80,6 @@ namespace UserDatabaseWebApp.Controllers
             return View(user);
         }
 
-        // POST: Users/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Edit([Bind(Include = "Id,Name,Email,Password,LastSeen,Blocked")] User user)
@@ -90,7 +93,6 @@ namespace UserDatabaseWebApp.Controllers
             return View(user);
         }
 
-        // GET: Users/Delete/5
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -105,7 +107,6 @@ namespace UserDatabaseWebApp.Controllers
             return View(user);
         }
 
-        // POST: Users/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
@@ -125,24 +126,51 @@ namespace UserDatabaseWebApp.Controllers
             base.Dispose(disposing);
         }
 
-        // POST: Users/Login
         [HttpPost]
-        public ActionResult Login(string Email, string Password)
+        public ActionResult Login(User model)
         {
-            var user = db.Users.FirstOrDefault(u => u.Email == Email && u.Password == Password);
+            var user = db.Users.FirstOrDefault(u => u.Email == model.Email);
 
             if (user != null)
             {
-                user.LastSeen = DateTime.Now;
+                bool isPasswordValid = VerifyPassword(model.Password, user.Password);
+                if (isPasswordValid)
+                {
+                    return RedirectToAction("Index", "Users");
+                }
+                    user.LastSeen = DateTime.Now;
                 db.SaveChanges();
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Users");
             }
-            else
-            {
-                ModelState.AddModelError("", "Invalid email or password");
-                return RedirectToAction("SignIn", "Home");
-            }
+            ModelState.AddModelError("", "Invalid email or password");
+            return View(model);
         }
 
+        [HttpPost]
+        public ActionResult SignUp(string Username, string Email, string Password)
+        {
+            var existingUser = db.Users.FirstOrDefault(u => u.Email == Email);
+
+            if (existingUser != null)
+            {
+                ModelState.AddModelError("", "A user with this email already exists");
+                TempData["Email"] = Email;
+                return RedirectToAction("Login", "Users");
+            }
+
+            var user = new User
+            {
+                Name = Username,
+                Email = Email,
+                Password = Password,
+                LastSeen = DateTime.Now,
+                Blocked = false
+            };
+
+            db.Users.Add(user);
+            db.SaveChanges();
+
+            return RedirectToAction("Index", "Users");
+        }
     }
 }

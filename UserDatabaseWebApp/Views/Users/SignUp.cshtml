@@ -1,8 +1,13 @@
 ﻿
 @{
-    ViewBag.Title = "SignIn";
+    ViewBag.Title = "SignUp";
     Layout = "~/Views/Shared/AuthorizationLayout.cshtml";
 }
+
+@{
+    TempData.Keep("Email");
+}
+
 
 <div class="row min-h-100">
     <div class="col-md-6 d-flex align-items-center justify-content-center">
@@ -15,21 +20,31 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <div class="mb-4">
-                                            <h2 class="mb-3">Sign In</h2>
+                                            <h2 class="mb-3">Sign Up</h2>
                                         </div>
                                     </div>
                                 </div>
-                                <form asp-controller="Users" asp-action="Login" method="post">
-
+                                <form asp-controller="Users" asp-action="SignUp" method="post">
                                     <div class="col-12 mt-3">
-                                        <div class="mb-3">
-                                            <label for="InputEmail" class="form-label">Email address</label>
-                                            <input type="email" class="form-control w-100" id="InputEmail" name="Email" aria-describedby="emailHelp">
-                                            <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                                        <div class="d-grid">
+                                            <label for="InputName" class="form-label">Username</label>
+                                            <input type="text" class="form-control" id="InputName" name="Username" aria-describedby="emailHelp">
                                         </div>
                                     </div>
                                     <div class="col-12 mt-3">
-                                        <div class="mb-3">
+                                        <div class="d-grid">
+                                            <label for="InputEmail" class="form-label">Email address</label>
+                                            <input type="email" class="form-control" id="InputEmail" name="Email"
+                                                   value="@TempData["Email"]" aria-describedby="emailHelp">
+                                            @if (TempData["Email"] != null)
+                                            {
+                                                <div class="text-danger">A user with this email already exists</div>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mt-3">
+                                        <div class="d-grid">
                                             <label for="InputPassword" class="form-label">Password</label>
                                             <input type="password" class="form-control" id="InputPassword" name="Password" autocomplete="new-password">
                                         </div>
@@ -42,7 +57,7 @@
                                     </div>
                                     <div class="col-12 mt-3">
                                         <div class="d-grid">
-                                            <button type="submit" class="btn btn-primary">Sign In</button>
+                                            <button type="submit" class="btn btn-primary">Sign Up</button>
                                         </div>
                                     </div>
                                 </form>
@@ -57,4 +72,6 @@
         <img src="https://cdn.pixabay.com/photo/2020/01/26/20/14/computer-4795762_1280.jpg" class="img-fluid" alt="Responsive image">
     </div>
 </div>
+
+
 
